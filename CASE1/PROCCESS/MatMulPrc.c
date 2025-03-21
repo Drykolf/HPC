@@ -1,28 +1,13 @@
-#define _POSIX_C_SOURCE 199309L
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <pthread.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
-#define MAX_THREAD 4
+#define MAX_PROCCES 4
 
-struct thread_data {
-    int** matA;
-    int** matB;
-    int** result;
-    int size;
-    int i;
-};
-
-void* multi(void* arg) {
-    struct thread_data* data = (struct thread_data*)arg;
-    int** matA = data->matA;
-    int** matB = data->matB;
-    int** result = data->result;
-    int size = data->size;
-    int thread_id = data->i;
-
-    for (int i = thread_id * size / MAX_THREAD; i < (thread_id + 1) * size / MAX_THREAD; i++) {
+void multi(int** matA, int** matB, int** result, int size, int process_id) {
+    for (int i = process_id * size / MAX_PROCCES; i < (process_id + 1) * size / MAX_PROCCES; i++) {
         for (int j = 0; j < size; j++) {
             result[i][j] = 0;
             for (int k = 0; k < size; k++) {
@@ -30,24 +15,20 @@ void* multi(void* arg) {
             }
         }
     }
-    pthread_exit(0);
 }
 
-int** multiply_matrices_threads(int** matA, int** matB, int** result, int size) {
-    pthread_t threads[MAX_THREAD];
-    struct thread_data thread_data_array[MAX_THREAD];
+int** multiply_matrices_processes(int** matA, int** matB, int** result, int size) {
+    pid_t pids[MAX_PROCCES];
 
-    for (int i = 0; i < MAX_THREAD; i++) {
-        thread_data_array[i].matA = matA;
-        thread_data_array[i].matB = matB;
-        thread_data_array[i].result = result;
-        thread_data_array[i].size = size;
-        thread_data_array[i].i = i;
-        pthread_create(&threads[i], NULL, multi, (void*)&thread_data_array[i]);
+    for (int i = 0; i < MAX_PROCCES; i++) {
+        if ((pids[i] = fork()) == 0) {
+            multi(matA, matB, result, size, i);
+            exit(0);
+        }
     }
 
-    for (int i = 0; i < MAX_THREAD; i++) {
-        pthread_join(threads[i], NULL);
+    for (int i = 0; i < MAX_PROCCES; i++) {
+        waitpid(pids[i], NULL, 0);
     }
 
     return result;
@@ -121,16 +102,16 @@ int main(int argc, char *argv[]) {
     int** matrixA;
     int** matrixB;
     int** result;
-    struct timespec start, end;
+    clock_t start, end;
     double cpu_time_used;
 
     initialize_matrices(&matrixA, &matrixB, &result, n);
 
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    result = multiply_matrices_threads(matrixA, matrixB, result, n);
-    clock_gettime(CLOCK_MONOTONIC, &end);
+    start = clock();
+    result = multiply_matrices_processes(matrixA, matrixB, result, n);
+    end = clock();
 
-    cpu_time_used = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
     write_time_taken(cpu_time_used, n);
     printf("multiplication took %f seconds to execute \n", cpu_time_used);
 

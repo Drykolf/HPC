@@ -1,0 +1,10 @@
+Tiempo consumido: 0.353778, para cantidad: 500
+Tiempo consumido: 0.343683, para cantidad: 500
+Tiempo consumido: 2.866897, para cantidad: 1000
+Tiempo consumido: 2.866208, para cantidad: 1000
+Tiempo consumido: 2.860565, para cantidad: 1000
+Tiempo consumido: 2.861434, para cantidad: 1000
+Tiempo consumido: 2.862281, para cantidad: 1000
+Tiempo consumido: 2.871449, para cantidad: 1000
+Tiempo consumido: 0.716781, para cantidad: 1000
+Tiempo consumido: 2.460950, para cantidad: 1500
