@@ -3,21 +3,22 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/shm.h>
 
 #define MAX_PROCCES 4
 
-void multi(int** matA, int** matB, int** result, int size, int process_id) {
+void multi(int** matA, int** matB, int* result, int size, int process_id) {
     for (int i = process_id * size / MAX_PROCCES; i < (process_id + 1) * size / MAX_PROCCES; i++) {
         for (int j = 0; j < size; j++) {
-            result[i][j] = 0;
+            result[i * size + j] = 0;
             for (int k = 0; k < size; k++) {
-                result[i][j] += matA[i][k] * matB[k][j];
+                result[i * size + j] += matA[i][k] * matB[k][j];
             }
         }
     }
 }
 
-int** multiply_matrices_processes(int** matA, int** matB, int** result, int size) {
+void multiply_matrices_processes(int** matA, int** matB, int* result, int size) {
     pid_t pids[MAX_PROCCES];
 
     for (int i = 0; i < MAX_PROCCES; i++) {
@@ -30,8 +31,6 @@ int** multiply_matrices_processes(int** matA, int** matB, int** result, int size
     for (int i = 0; i < MAX_PROCCES; i++) {
         waitpid(pids[i], NULL, 0);
     }
-
-    return result;
 }
 
 int** generate_matrix(int size) {
@@ -41,7 +40,7 @@ int** generate_matrix(int size) {
     }
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            mat[i][j] = rand() % 1001;
+            mat[i][j] = i+j;
         }
     }
     return mat;
@@ -57,33 +56,45 @@ void write_time_taken(double time, int data) {
     fclose(f);
 }
 
-void print_result(int** result, int size) {
+void print_result(int* result, int size) {
+    FILE *f = fopen("matriz.txt", "w");
+    if (f == NULL) {
+        printf("Error opening file!\n");
+        exit(1);
+    }
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            printf("%d ", result[i][j]);
+            fprintf(f, "%d ", result[i * size + j]);
         }
-        printf("\n");
+        fprintf(f, "\n");
     }
+    fclose(f);
 }
 
-void initialize_matrices(int*** matrixA, int*** matrixB, int*** result, int size) {
+void initialize_matrices(int*** matrixA, int*** matrixB, int** result, int size, int* shmid) {
     *matrixA = generate_matrix(size);
     *matrixB = generate_matrix(size);
-    *result = (int**)malloc(size * sizeof(int*));
-    for (int i = 0; i < size; i++) {
-        (*result)[i] = (int*)malloc(size * sizeof(int));
+    *shmid = shmget(IPC_PRIVATE, size * size * sizeof(int), IPC_CREAT | 0666);
+    if (*shmid < 0) {
+        perror("shmget");
+        exit(1);
+    }
+    *result = (int*)shmat(*shmid, NULL, 0);
+    if (*result == (int*)-1) {
+        perror("shmat");
+        exit(1);
     }
 }
 
-void free_matrices(int** matrixA, int** matrixB, int** result, int size) {
+void free_matrices(int** matrixA, int** matrixB, int* result, int size, int shmid) {
     for (int i = 0; i < size; i++) {
         free(matrixA[i]);
         free(matrixB[i]);
-        free(result[i]);
     }
     free(matrixA);
     free(matrixB);
-    free(result);
+    shmdt(result);
+    shmctl(shmid, IPC_RMID, NULL);
 }
 
 int main(int argc, char *argv[]) {
@@ -101,14 +112,15 @@ int main(int argc, char *argv[]) {
 
     int** matrixA;
     int** matrixB;
-    int** result;
+    int* result;
+    int shmid;
     clock_t start, end;
     double cpu_time_used;
 
-    initialize_matrices(&matrixA, &matrixB, &result, n);
+    initialize_matrices(&matrixA, &matrixB, &result, n, &shmid);
 
     start = clock();
-    result = multiply_matrices_processes(matrixA, matrixB, result, n);
+    multiply_matrices_processes(matrixA, matrixB, result, n);
     end = clock();
 
     cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
@@ -119,7 +131,7 @@ int main(int argc, char *argv[]) {
         print_result(result, n);
     }
 
-    free_matrices(matrixA, matrixB, result, n);
+    free_matrices(matrixA, matrixB, result, n, shmid);
 
     return 0;
 }

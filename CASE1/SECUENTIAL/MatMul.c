@@ -39,7 +39,7 @@ int** generate_matrix(int size) {
     }
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            mat[i][j] = rand() % 1001;
+            mat[i][j] = i+j;
         }
     }
     return mat;
@@ -55,13 +55,19 @@ void write_result(double time, int data) {
     fclose(f); // Close the file
 }
 
-void printResult(int** result, int size){
+void print_result(int** result, int size) {
+    FILE *f = fopen("matriz.txt", "w");
+    if (f == NULL) {
+        printf("Error opening file!\n");
+        exit(1);
+    }
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            printf("%d ", result[i][j]);
+            fprintf(f, "%d ", result[i][j]);
         }
-        printf("\n");
+        fprintf(f, "\n");
     }
+    fclose(f);
 }
 
 int main(int argc, char *argv[]) {
@@ -98,7 +104,7 @@ int main(int argc, char *argv[]) {
     write_result(cpu_time_used,n);
     printf("multiplication took %f seconds to execute \n", cpu_time_used); //mostrar el tiempo
     if(doPrint != 0){
-        printResult(result,n);
+        print_result(result,n);
     }
     // Free allocated memory
     for (int i = 0; i < n; i++) {
