@@ -1,5 +1,5 @@
 // C para multiplicar dos matrices
-
+#define _POSIX_C_SOURCE 199309L
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -51,7 +51,7 @@ void write_result(double time, int data) {
         printf("Error opening file!\n");
         exit(1);
     }
-    fprintf(f, "Tiempo consumido: %f, para cantidad: %d\n", time, data);
+    fprintf(f, "Tiempo consumido: %.3f, para cantidad: %d\n", time, data);
     fclose(f); // Close the file
 }
 
@@ -90,19 +90,19 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < n; i++) {
         result[i] = (int*)malloc(n * sizeof(int));
     }
-    clock_t start, end;
-    double cpu_time_used;
-    start = clock();
+    struct timespec start, end;
+    double cpu_time_used, ms_time;
+    clock_gettime(CLOCK_MONOTONIC, &start);
     result = multiply_matrices_save(matrixA, matrixB, result, n); //guardar resultados
-    end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    //cpu_time_used = (end.tv_sec - start.tv_sec) + ((double)(end.tv_nsec - start.tv_nsec)) / 1e9; // Segundos
+    ms_time = (end.tv_sec - start.tv_sec) * 1000 + ((double)(end.tv_nsec - start.tv_nsec)) / 1e6; // Miliseg
     // Compilar con: gcc -pg -o matMul matMul.c
     // Ejecutar con: ./matMul <argumentos>
     // Analizar con: gprof matMul gmon.out > analysis.txt
 
-    write_result(cpu_time_used,n);
-    printf("multiplication took %f seconds to execute \n", cpu_time_used); //mostrar el tiempo
+    write_result(ms_time,n);
+    printf("multiplication took %.3f milliseconds to execute \n", ms_time); //mostrar el tiempo en ms
     if(doPrint != 0){
         print_result(result,n);
     }

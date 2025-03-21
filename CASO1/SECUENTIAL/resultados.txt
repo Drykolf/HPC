@@ -1,0 +1,10 @@
+Tiempo consumido: 332.921, para cantidad: 500
+Tiempo consumido: 332.683, para cantidad: 500
+Tiempo consumido: 334.282, para cantidad: 500
+Tiempo consumido: 332.491, para cantidad: 500
+Tiempo consumido: 332.323, para cantidad: 500
+Tiempo consumido: 334.206, para cantidad: 500
+Tiempo consumido: 332.700, para cantidad: 500
+Tiempo consumido: 332.859, para cantidad: 500
+Tiempo consumido: 333.013, para cantidad: 500
+Tiempo consumido: 332.448, para cantidad: 500

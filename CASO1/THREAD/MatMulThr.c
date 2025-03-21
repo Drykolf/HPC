@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
     result = multiply_matrices_threads(matrixA, matrixB, result, n);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    cpu_time_used = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    cpu_time_used = (end.tv_sec - start.tv_sec) + ((double)(end.tv_nsec - start.tv_nsec)) / 1e9;
     write_time_taken(cpu_time_used, n);
     printf("multiplication took %f seconds to execute \n", cpu_time_used);
 
