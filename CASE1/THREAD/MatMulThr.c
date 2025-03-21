@@ -1,10 +1,9 @@
-// C para multiplicar dos matrices
-
+#define _POSIX_C_SOURCE 199309L
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
-// maximum number of threads
+
 #define MAX_THREAD 4
 
 struct thread_data {
@@ -13,8 +12,8 @@ struct thread_data {
     int** result;
     int size;
     int i;
-    int j;
 };
+
 void* multi(void* arg) {
     struct thread_data* data = (struct thread_data*)arg;
     int** matA = data->matA;
@@ -68,16 +67,16 @@ int** generate_matrix(int size) {
 }
 
 void write_time_taken(double time, int data) {
-    FILE *f = fopen("resultados.txt", "a"); // Open file in append mode
+    FILE *f = fopen("resultados.txt", "a");
     if (f == NULL) {
         printf("Error opening file!\n");
         exit(1);
     }
     fprintf(f, "Tiempo consumido: %f, para cantidad: %d\n", time, data);
-    fclose(f); // Close the file
+    fclose(f);
 }
 
-void print_result(int** result, int size){
+void print_result(int** result, int size) {
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             printf("%d ", result[i][j]);
@@ -108,7 +107,7 @@ void free_matrices(int** matrixA, int** matrixB, int** result, int size) {
 
 int main(int argc, char *argv[]) {
     int doPrint = 0;
-    if (argc != 2 ) {
+    if (argc != 2) {
         if (argc != 3) {
             fprintf(stderr, "Usage: %s <integer>\n", argv[0]);
             return 1;
@@ -122,16 +121,16 @@ int main(int argc, char *argv[]) {
     int** matrixA;
     int** matrixB;
     int** result;
-    clock_t start, end;
+    struct timespec start, end;
     double cpu_time_used;
 
     initialize_matrices(&matrixA, &matrixB, &result, n);
 
-    start = clock();
+    clock_gettime(CLOCK_MONOTONIC, &start);
     result = multiply_matrices_threads(matrixA, matrixB, result, n);
-    end = clock();
+    clock_gettime(CLOCK_MONOTONIC, &end);
 
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    cpu_time_used = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
     write_time_taken(cpu_time_used, n);
     printf("multiplication took %f seconds to execute \n", cpu_time_used);
 
