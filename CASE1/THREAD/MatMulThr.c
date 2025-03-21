@@ -60,7 +60,7 @@ int** generate_matrix(int size) {
     }
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            mat[i][j] = rand() % 1001;
+            mat[i][j] = i+j;
         }
     }
     return mat;
@@ -77,12 +77,18 @@ void write_time_taken(double time, int data) {
 }
 
 void print_result(int** result, int size) {
+    FILE *f = fopen("matriz.txt", "w");
+    if (f == NULL) {
+        printf("Error opening file!\n");
+        exit(1);
+    }
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            printf("%d ", result[i][j]);
+            fprintf(f, "%d ", result[i][j]);
         }
-        printf("\n");
+        fprintf(f, "\n");
     }
+    fclose(f);
 }
 
 void initialize_matrices(int*** matrixA, int*** matrixB, int*** result, int size) {

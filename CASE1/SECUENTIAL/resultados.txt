@@ -3,3 +3,6 @@ Tiempo consumido: 0.332822, para cantidad: 500
 Tiempo consumido: 2.689969, para cantidad: 1000
 Tiempo consumido: 2.689334, para cantidad: 1000
 Tiempo consumido: 9.139185, para cantidad: 1500
+Tiempo consumido: 0.000004, para cantidad: 10
+Tiempo consumido: 0.000004, para cantidad: 10
+Tiempo consumido: 0.000044, para cantidad: 25
