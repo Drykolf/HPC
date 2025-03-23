@@ -39,7 +39,7 @@ int** generate_matrix(int size) {
     }
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            mat[i][j] = i+j;
+            mat[i][j] = rand() % 1001;;
         }
     }
     return mat;

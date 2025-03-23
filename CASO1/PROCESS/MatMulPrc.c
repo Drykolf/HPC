@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 199309L
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -40,19 +41,21 @@ int** generate_matrix(int size) {
     }
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            mat[i][j] = i+j;
+            mat[i][j] = rand() % 1001;
         }
     }
     return mat;
 }
 
-void write_time_taken(double time, int data) {
-    FILE *f = fopen("resultados.txt", "a");
+void write_result(double time, int data) {
+    char filename[50];
+    sprintf(filename, "resultados_%d.txt", MAX_PROCCES);
+    FILE *f = fopen(filename, "a");
     if (f == NULL) {
         printf("Error opening file!\n");
         exit(1);
     }
-    fprintf(f, "Tiempo consumido: %f, para cantidad: %d\n", time, data);
+    fprintf(f, "Tiempo consumido: %.3f, para cantidad: %d\n", time, data);
     fclose(f);
 }
 
@@ -114,18 +117,18 @@ int main(int argc, char *argv[]) {
     int** matrixB;
     int* result;
     int shmid;
-    clock_t start, end;
-    double cpu_time_used;
+    struct timespec start, end;
+    double cpu_time_used,ms_time;
 
     initialize_matrices(&matrixA, &matrixB, &result, n, &shmid);
-
-    start = clock();
+    clock_gettime(CLOCK_MONOTONIC, &start);
     multiply_matrices_processes(matrixA, matrixB, result, n);
-    end = clock();
+    clock_gettime(CLOCK_MONOTONIC, &end);
 
-    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    write_time_taken(cpu_time_used, n);
-    printf("multiplication took %f seconds to execute \n", cpu_time_used);
+    //cpu_time_used = (end.tv_sec - start.tv_sec) + ((double)(end.tv_nsec - start.tv_nsec)) / 1e9;
+    ms_time = (end.tv_sec - start.tv_sec) * 1000 + ((double)(end.tv_nsec - start.tv_nsec)) / 1e6; // Miliseg
+    write_result(ms_time,n);
+    printf("multiplication took %.3f milliseconds to execute \n", ms_time); //mostrar el tiempo en ms
 
     if (doPrint != 0) {
         print_result(result, n);

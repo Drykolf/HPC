@@ -1,2 +1,0 @@
-Tiempo consumido: 0.087431, para cantidad: 500
-Tiempo consumido: 0.086742, para cantidad: 500
