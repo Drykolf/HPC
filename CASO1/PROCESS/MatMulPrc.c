@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <sys/shm.h>
 
-#define MAX_PROCCES 4
+#define MAX_PROCCES 12
 
 void multi(int** matA, int** matB, int* result, int size, int process_id) {
     for (int i = process_id * size / MAX_PROCCES; i < (process_id + 1) * size / MAX_PROCCES; i++) {
