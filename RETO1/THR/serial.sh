@@ -35,6 +35,6 @@ NSTEPS=10000
 ./jacobi1d $N $NSTEPS OUT/u_serial5.out > OUT/timing_serial5.out
 
 # Test6
-N=10000000
-NSTEPS=100000
-./jacobi1d $N $NSTEPS OUT/u_serial6.out > OUT/timing_serial6.out
+#N=10000000
+#NSTEPS=100000
+#./jacobi1d $N $NSTEPS OUT/u_serial6.out > OUT/timing_serial6.out
