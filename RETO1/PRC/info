@@ -1,0 +1,82 @@
+1. Dividing the Workload
+The domain of the Jacobi 1D problem is divided into chunks, with each chunk assigned to a separate process. The size of each chunk is calculated as:
+int chunk_size = n / MAX_PROCESS;
+Where:
+
+n is the total number of points in the domain.
+MAX_PROCESS is the maximum number of processes (set to 16 in this case).
+Each process is responsible for computing updates for its assigned chunk of the domain.
+
+
+
+
+2. Creating Pipes for Communication
+Pipes are used for communication between the parent process and the child processes. Each process gets its own pipe:
+int pipes[MAX_PROCESS][2];
+for (int p = 0; p < MAX_PROCESS; ++p) {
+    if (pipe(pipes[p]) == -1) {
+        perror("pipe");
+        exit(EXIT_FAILURE);
+    }
+}
+The parent process uses the read end of the pipe to wait for notifications from the child processes.
+Each child process uses the write end of its pipe to notify the parent when it has completed its work.
+
+3. Forking Child Processes
+Child processes are created using fork():
+for (int p = 0; p < MAX_PROCESS; ++p) {
+    pid[p] = fork();
+    if (pid[p] == 0) { // Child process
+        // Perform computations for the assigned chunk
+        ...
+        exit(0); // Exit the child process after completing its work
+    }
+}
+Each child process computes updates for its assigned chunk of the domain.
+The parent process continues to manage synchronization and waits for all child processes to complete.
+
+4. Child Process Computation
+Each child process performs the Jacobi iteration for its assigned chunk. The computation alternates between updating u and utmp:
+f (sweep % 2 == 0) {
+    /* Old data in u; new data in utmp */
+    for (i = start; i < end; ++i)
+        utmp[i] = (u[i - 1] + u[i + 1] + h2 * f[i]) / 2;
+} else {
+    /* Old data in utmp; new data in u */
+    for (i = start; i < end; ++i)
+        u[i] = (utmp[i - 1] + utmp[i + 1] + h2 * f[i]) / 2;
+}
+start and end define the range of indices assigned to the process.
+After completing its computation for a sweep, the child process writes a "done" message to its pipe to notify the parent:
+
+if (write(pipes[p][1], "done", 4) != 4) {
+    perror("write");
+    exit(EXIT_FAILURE);
+}
+
+5. Parent Process Synchronization
+The parent process waits for all child processes to complete their work for each sweep. It does this by reading from the pipes:
+for (int p = 0; p < MAX_PROCESS; ++p) {
+    char buffer[4];
+    close(pipes[p][1]); // Close write end of the pipe in parent
+    if (read(pipes[p][0], buffer, 4) != 4) { // Wait for "done" from child
+        perror("read");
+        exit(EXIT_FAILURE);
+    }
+}
+The parent process ensures that all child processes have completed their work before proceeding to the next sweep.
+
+6. Waiting for Child Processes
+After all sweeps are completed, the parent process waits for all child processes to terminate using waitpid:
+for (int p = 0; p < MAX_PROCESS; ++p) {
+    waitpid(pid[p], &status, 0);
+    close(pipes[p][0]); // Close read end of the pipe
+}
+This ensures that all resources are cleaned up properly.
+
+Summary of Parallelism
+Processes: The workload is divided among multiple processes created using fork().
+Pipes: Pipes are used for communication and synchronization between the parent and child processes.
+Synchronization: The parent process waits for all child processes to complete their work for each sweep before proceeding to the next sweep.
+Scalability: The number of processes is limited by MAX_PROCESS and the system's ability to handle multiple processes.
+This approach leverages process-based parallelism to divide the workload and execute computations concurrently. However, it introduces overhead due to process creation, inter-process communication, and synchronization.

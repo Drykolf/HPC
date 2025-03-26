@@ -1,3 +1,30 @@
 n: 100000
 nsteps: 1000
-Elapsed time: 0.026772 s
+Elapsed time: 0.0249788 s
+n: 100000
+nsteps: 1000
+Elapsed time: 0.0268801 s
+n: 100000
+nsteps: 1000
+Elapsed time: 0.0261827 s
+n: 100000
+nsteps: 1000
+Elapsed time: 0.0257721 s
+n: 100000
+nsteps: 1000
+Elapsed time: 0.0258309 s
+n: 100000
+nsteps: 1000
+Elapsed time: 0.0252994 s
+n: 100000
+nsteps: 1000
+Elapsed time: 0.0258542 s
+n: 100000
+nsteps: 1000
+Elapsed time: 0.0263438 s
+n: 100000
+nsteps: 1000
+Elapsed time: 0.0261871 s
+n: 100000
+nsteps: 1000
+Elapsed time: 0.0252608 s

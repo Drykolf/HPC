@@ -12,29 +12,41 @@ mkdir -p OUT
 # Test1
 N=100000
 NSTEPS=1000
-./jacobi1d $N $NSTEPS OUT/u_serial1.out > OUT/timing_serial1.out
+for i in {1..10}; do
+    ./jacobi1d $N $NSTEPS OUT/timing_serial1.out > OUT/u_serial1.out
+done
 
 # Test2
 N=100000
 NSTEPS=10000
-./jacobi1d $N $NSTEPS OUT/u_serial2.out > OUT/timing_serial2.out
+for i in {1..10}; do
+    ./jacobi1d $N $NSTEPS OUT/timing_serial2.out > OUT/u_serial2.out
+done
 
 # Test3
 N=1000000
 NSTEPS=1000
-./jacobi1d $N $NSTEPS OUT/u_serial3.out > OUT/timing_serial3.out
+for i in {1..10}; do
+    ./jacobi1d $N $NSTEPS OUT/timing_serial3.out > OUT/u_serial3.out
+done
 
 # Test4
 N=1000000
 NSTEPS=10000
-./jacobi1d $N $NSTEPS OUT/u_serial4.out > OUT/timing_serial4.out
+for i in {1..10}; do
+    ./jacobi1d $N $NSTEPS OUT/timing_serial4.out > OUT/u_serial4.out
+done
 
 # Test5
 N=10000000
 NSTEPS=10000
-./jacobi1d $N $NSTEPS OUT/u_serial5.out > OUT/timing_serial5.out
+for i in {1..10}; do
+    ./jacobi1d $N $NSTEPS OUT/timing_serial5.out > OUT/u_serial5.out
+done
 
 # Test6
 N=10000000
 NSTEPS=100000
-./jacobi1d $N $NSTEPS OUT/u_serial6.out > OUT/timing_serial6.out
+for i in {1..10}; do
+    ./jacobi1d $N $NSTEPS OUT/timing_serial6.out > OUT/u_serial6.out
+done

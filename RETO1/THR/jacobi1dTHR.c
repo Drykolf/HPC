@@ -1,10 +1,11 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
 #include "timing.h"
 
-#define MAX_THREAD 8
+#define MAX_THREADS 16
 
 typedef struct {
     int start;
@@ -12,74 +13,67 @@ typedef struct {
     int n;
     double h2;
     double* u;
-    double* utmp;
     double* f;
+    double* utmp;
 } thread_data_t;
 
-/* Thread function for Jacobi iteration */
+pthread_barrier_t barrier;
+
 void* jacobi_thread(void* arg) {
-    thread_data_t* data = (thread_data_t*) arg;
+    thread_data_t* data = (thread_data_t*)arg;
+    double left = data->u[data->start - 1];
     for (int i = data->start; i < data->end; ++i) {
-        data->utmp[i] = (data->u[i-1] + data->u[i+1] + data->h2 * data->f[i]) / 2;
+        double right = data->u[i + 1];
+        data->utmp[i] = (left + right + data->h2 * data->f[i]) / 2;
+        left = data->u[i];
     }
+    pthread_barrier_wait(&barrier);
     return NULL;
 }
 
-/* --
- * Do nsweeps sweeps of Jacobi iteration on a 1D Poisson problem
- * 
- *    -u'' = f
- *
- * discretized by n+1 equally spaced mesh points on [0,1].
- * u is subject to Dirichlet boundary conditions specified in
- * the u[0] and u[n] entries of the initial vector.
- */
-void jacobi(int nsweeps, int n, double* u, double* f)
-{
+void jacobi(int nsweeps, int n, double* u, double* f) {
     int sweep;
     double h  = 1.0 / n;
-    double h2 = h*h;
-    double* utmp = (double*) malloc( (n+1) * sizeof(double) );
-    pthread_t threads[MAX_THREAD];
-    thread_data_t thread_data[MAX_THREAD];
-    int chunk_size = (n + MAX_THREAD - 1) / MAX_THREAD; // Ensure all elements are covered
+    double h2 = h * h;
+    double* utmp = (double*) malloc((n+1) * sizeof(double));
+    pthread_t threads[MAX_THREADS];
+    thread_data_t thread_data[MAX_THREADS];
+    int chunk_size = (n + MAX_THREADS - 1) / MAX_THREADS; // Ceiling division
+
+    pthread_barrier_init(&barrier, NULL, MAX_THREADS);
 
     /* Fill boundary conditions into utmp */
     utmp[0] = u[0];
     utmp[n] = u[n];
 
-    /* Initialize thread data */
-    for (int t = 0; t < MAX_THREAD; ++t) {
-        thread_data[t].start = t * chunk_size + 1;
-        thread_data[t].end = (t + 1) * chunk_size + 1;
-        if (thread_data[t].end > n) thread_data[t].end = n;
-        thread_data[t].n = n;
-        thread_data[t].h2 = h2;
-        thread_data[t].u = u;
-        thread_data[t].utmp = utmp;
-        thread_data[t].f = f;
-    }
-
     for (sweep = 0; sweep < nsweeps; sweep += 2) {
         /* Old data in u; new data in utmp */
-        for (int t = 0; t < MAX_THREAD; ++t) {
+        for (int t = 0; t < MAX_THREADS; ++t) {
+            thread_data[t].start = t * chunk_size + 1;
+            thread_data[t].end = (t == MAX_THREADS - 1) ? n : (t + 1) * chunk_size;
+            thread_data[t].n = n;
+            thread_data[t].h2 = h2;
+            thread_data[t].u = u;
+            thread_data[t].f = f;
+            thread_data[t].utmp = utmp;
             pthread_create(&threads[t], NULL, jacobi_thread, &thread_data[t]);
         }
-        for (int t = 0; t < MAX_THREAD; ++t) {
+        for (int t = 0; t < MAX_THREADS; ++t) {
             pthread_join(threads[t], NULL);
         }
 
         /* Old data in utmp; new data in u */
-        for (int t = 0; t < MAX_THREAD; ++t) {
+        for (int t = 0; t < MAX_THREADS; ++t) {
             thread_data[t].u = utmp;
             thread_data[t].utmp = u;
             pthread_create(&threads[t], NULL, jacobi_thread, &thread_data[t]);
         }
-        for (int t = 0; t < MAX_THREAD; ++t) {
+        for (int t = 0; t < MAX_THREADS; ++t) {
             pthread_join(threads[t], NULL);
         }
     }
 
+    pthread_barrier_destroy(&barrier);
     free(utmp);
 }
 
@@ -87,13 +81,25 @@ void write_solution(int n, double* u, const char* fname)
 {
     int i;
     double h = 1.0 / n;
-    FILE* fp = fopen(fname, "w+");
+    //FILE* fp = fopen(fname, "w+");
     for (i = 0; i <= n; ++i)
-        fprintf(fp, "%g %g\n", i*h, u[i]);
-    fclose(fp);
+        printf("%g %g\n", i*h, u[i]);
+    //fclose(fp);
 }
 
-
+void write_results(int n, int nsteps, timing_t tstart, timing_t tend, const char* fname)
+{
+    FILE* fp = fopen(fname, "a");
+        if (fp == NULL) {
+            perror("Error opening file");
+            return;
+        }
+        fprintf(fp, "n: %d\n"
+                    "nsteps: %d\n"
+                    "Elapsed time: %g s\n", 
+                    n, nsteps, (double)timespec_diff(tstart, tend));
+        fclose(fp);
+}
 int main(int argc, char** argv)
 {
     int i;
@@ -122,17 +128,24 @@ int main(int argc, char** argv)
     jacobi(nsteps, n, u, f);
     get_time(&tend);
 
-    /* Run the solver */    
+    /* Run the solver     
     printf("n: %d\n"
            "nsteps: %d\n"
            "Elapsed time: %g s\n", 
-           n, nsteps, (double)timespec_diff(tstart, tend));
-
+           n, nsteps, timespec_diff(tstart, tend));
+    */
+    if (fname){
+        write_results(n, nsteps, tstart, tend, fname);
+    }
     /* Write the results */
-    if (fname)
-        write_solution(n, u, fname);
+    //if (fname)
+        //write_solution(n, u, fname);
 
     free(f);
     free(u);
     return 0;
 }
+
+//Se porciona la carga en chunks de tamaño n/threads, se crea un arreglo de threads y se les asigna un rango de trabajo, se crea un barrier para sincronizar los threads y se ejecuta el jacobi_thread en cada thread, se espera a que todos los threads terminen
+//Se agregó una barrier para sincronizar los threads y reducir la cantidad de threads creados
+//Se compila usando -DCLOCK_REALTIME para medir el tiempo tomado

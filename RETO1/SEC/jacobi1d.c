@@ -43,13 +43,25 @@ void write_solution(int n, double* u, const char* fname)
 {
     int i;
     double h = 1.0 / n;
-    FILE* fp = fopen(fname, "w+");
+    //FILE* fp = fopen(fname, "w+");
     for (i = 0; i <= n; ++i)
-        fprintf(fp, "%g %g\n", i*h, u[i]);
-    fclose(fp);
+        printf("%g %g\n", i*h, u[i]);
+    //fclose(fp);
 }
 
-
+void write_results(int n, int nsteps, timing_t tstart, timing_t tend, const char* fname)
+{
+    FILE* fp = fopen(fname, "a");
+        if (fp == NULL) {
+            perror("Error opening file");
+            return;
+        }
+        fprintf(fp, "n: %d\n"
+                    "nsteps: %d\n"
+                    "Elapsed time: %g s\n", 
+                    n, nsteps, (double)timespec_diff(tstart, tend));
+        fclose(fp);
+}
 int main(int argc, char** argv)
 {
     int i;
@@ -78,15 +90,18 @@ int main(int argc, char** argv)
     jacobi(nsteps, n, u, f);
     get_time(&tend);
 
-    /* Run the solver */    
+    /* Run the solver     
     printf("n: %d\n"
            "nsteps: %d\n"
            "Elapsed time: %g s\n", 
            n, nsteps, timespec_diff(tstart, tend));
-
+    */
+    if (fname){
+        write_results(n, nsteps, tstart, tend, fname);
+    }
     /* Write the results */
-    if (fname)
-        write_solution(n, u, fname);
+    //if (fname)
+        //write_solution(n, u, fname);
 
     free(f);
     free(u);
