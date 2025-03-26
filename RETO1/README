@@ -11,3 +11,7 @@ gcc -DCLOCK_REALTIME -O3 jacobi1dPROC.c timing.c -o jacobi1d -pthread -lm
 to execute the serial:
 chmod +x serial.sh
 ./serial.sh
+
+#profiling
+gcc -pg -O3 jacobi1d.c timing.c -o jacobi1d -lm
+./jacobi1d 1000000 10000 output.txt
