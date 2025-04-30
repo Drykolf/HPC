@@ -6,7 +6,7 @@
 #include <omp.h> // Añadimos OpenMP
 
 // Definimos el número de hilos a utilizar
-#define NUM_THREADS 8
+#define NUM_THREADS 16
 
 int** multiply_matrices(int** matA, int** matB, int** result, int size) {
     #pragma omp parallel for num_threads(NUM_THREADS)
