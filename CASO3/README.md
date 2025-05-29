@@ -12,6 +12,10 @@ gcc -O3 -fopenmp MatMulOpenMP.c -o matMul8o3 -lm
 gcc -fopenmp MatMulOpenMP.c -o matMul8 -lm
 ### MPI version
 mpicc -o matMulMPI MatMulMPI.c -O3
+mpicc -o matMulMPI MatMulMPI.c
 ## Ejecucion:
 chmod +x runMatMul.sh
+dos2unix ./runMatMul.sh
 ./runMatMul.sh
+### MPI
+mpiexec -n 4 --hostfile ~/CASO3/mycluster.txt /home/cluser/CASO3/MPI/matMulMPI 500

@@ -1,26 +1,15 @@
 #!/bin/bash
+# Script: runMatMulMPI.sh
+# Asume que mycluster.txt está en ../ (directorio CASO3)
 
-for i in {1..10}
+HOSTFILE="../mycluster.txt"
+EXECUTABLE="./matMulMPI" # Para la versión no optimizada
+
+for size in 500 1000 1500 2000 3500 5000
 do
-    ./matMulMPI 500
-done
-for i in {1..10}
-do
-    ./matMulMPI 1000
-done
-for i in {1..10}
-do
-    ./matMulMPI 1500
-done
-for i in {1..10}
-do
-    ./matMulMPI 2000
-done
-for i in {1..10}
-do
-    ./matMulMPI 3500
-done
-for i in {1..10}
-do
-    ./matMulMPI 5000
+    echo "Running MPI: $EXECUTABLE with size $size"
+    for i in {1..10} # repeticiones
+    do
+        mpiexec -n 4 --hostfile $HOSTFILE $EXECUTABLE $size
+    done
 done

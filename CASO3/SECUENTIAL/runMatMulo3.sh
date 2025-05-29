@@ -1,26 +1,9 @@
 #!/bin/bash
 
-for i in {1..10}
+for size in 500 1000 1500 2000 3500 5000
 do
-    ./matMulo3 500
-done
-for i in {1..10}
-do
-    ./matMulo3 1000
-done
-for i in {1..10}
-do
-    ./matMulo3 1500
-done
-for i in {1..10}
-do
-    ./matMulo3 2000
-done
-for i in {1..10}
-do
-    ./matMulo3 3500
-done
-for i in {1..10}
-do
-    ./matMulo3 5000
+    for i in {1..10} # repeticiones
+    do
+        ./matMulo3 $size
+    done
 done
