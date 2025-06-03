@@ -17,48 +17,52 @@ void jacobi_mpi(int nsweeps, int n, double* u_local, double* f_local,
     double* utmp = (double*) malloc( local_n * sizeof(double) );
     double left_neighbor = 0.0, right_neighbor = 0.0;
     
-    // Copy boundary conditions for local array
+    // Copy initial values
     memcpy(utmp, u_local, local_n * sizeof(double));
 
-    for (sweep = 0; sweep < nsweeps; sweep += 2) {
+    for (sweep = 0; sweep < nsweeps; sweep++) {
         
-        // Exchange boundary values with neighbors
-        if (rank > 0) {
-            MPI_Sendrecv(&u_local[1], 1, MPI_DOUBLE, rank-1, 0,
-                        &left_neighbor, 1, MPI_DOUBLE, rank-1, 0,
-                        comm, MPI_STATUS_IGNORE);
+        // Non-blocking communication to avoid deadlocks
+        MPI_Request req_send_left = MPI_REQUEST_NULL, req_recv_left = MPI_REQUEST_NULL;
+        MPI_Request req_send_right = MPI_REQUEST_NULL, req_recv_right = MPI_REQUEST_NULL;
+        
+        // Start non-blocking communication
+        if (rank > 0 && local_n > 2) {
+            MPI_Isend(&u_local[1], 1, MPI_DOUBLE, rank-1, 100, comm, &req_send_left);
+            MPI_Irecv(&left_neighbor, 1, MPI_DOUBLE, rank-1, 101, comm, &req_recv_left);
         }
-        if (rank < size-1) {
-            MPI_Sendrecv(&u_local[local_n-2], 1, MPI_DOUBLE, rank+1, 0,
-                        &right_neighbor, 1, MPI_DOUBLE, rank+1, 0,
-                        comm, MPI_STATUS_IGNORE);
+        if (rank < size-1 && local_n > 2) {
+            MPI_Isend(&u_local[local_n-2], 1, MPI_DOUBLE, rank+1, 101, comm, &req_send_right);
+            MPI_Irecv(&right_neighbor, 1, MPI_DOUBLE, rank+1, 100, comm, &req_recv_right);
         }
         
-        /* Old data in u_local; new data in utmp */
+        // Wait for communication to complete
+        if (req_recv_left != MPI_REQUEST_NULL) MPI_Wait(&req_recv_left, MPI_STATUS_IGNORE);
+        if (req_recv_right != MPI_REQUEST_NULL) MPI_Wait(&req_recv_right, MPI_STATUS_IGNORE);
+        if (req_send_left != MPI_REQUEST_NULL) MPI_Wait(&req_send_left, MPI_STATUS_IGNORE);
+        if (req_send_right != MPI_REQUEST_NULL) MPI_Wait(&req_send_right, MPI_STATUS_IGNORE);
+        
+        /* Update interior points */
         for (i = 1; i < local_n-1; ++i) {
-            double left_val = (i == 1 && rank > 0) ? left_neighbor : u_local[i-1];
-            double right_val = (i == local_n-2 && rank < size-1) ? right_neighbor : u_local[i+1];
-            utmp[i] = (left_val + right_val + h2*f_local[i])/2;
+            double left_val, right_val;
+            
+            if (i == 1 && rank > 0) {
+                left_val = left_neighbor;
+            } else {
+                left_val = u_local[i-1];
+            }
+            
+            if (i == local_n-2 && rank < size-1) {
+                right_val = right_neighbor;
+            } else {
+                right_val = u_local[i+1];
+            }
+            
+            utmp[i] = (left_val + right_val + h2*f_local[i])/2.0;
         }
         
-        // Exchange boundary values for utmp
-        if (rank > 0) {
-            MPI_Sendrecv(&utmp[1], 1, MPI_DOUBLE, rank-1, 0,
-                        &left_neighbor, 1, MPI_DOUBLE, rank-1, 0,
-                        comm, MPI_STATUS_IGNORE);
-        }
-        if (rank < size-1) {
-            MPI_Sendrecv(&utmp[local_n-2], 1, MPI_DOUBLE, rank+1, 0,
-                        &right_neighbor, 1, MPI_DOUBLE, rank+1, 0,
-                        comm, MPI_STATUS_IGNORE);
-        }
-        
-        /* Old data in utmp; new data in u_local */
-        for (i = 1; i < local_n-1; ++i) {
-            double left_val = (i == 1 && rank > 0) ? left_neighbor : utmp[i-1];
-            double right_val = (i == local_n-2 && rank < size-1) ? right_neighbor : utmp[i+1];
-            u_local[i] = (left_val + right_val + h2*f_local[i])/2;
-        }
+        // Copy back to u_local instead of swapping pointers
+        memcpy(u_local, utmp, local_n * sizeof(double));
     }
 
     free(utmp);
@@ -96,8 +100,8 @@ int main(int argc, char** argv)
 {
     int i;
     int n, nsteps;
-    double* u;
-    double* f;
+    double* u = NULL;
+    double* f = NULL;
     double* u_local;
     double* f_local;
     double h;
@@ -117,35 +121,78 @@ int main(int argc, char** argv)
     fname  = (argc > 3) ? argv[3] : NULL;
     h      = 1.0/n;
 
-    // Calculate local domain size for each process
-    int base_size = (n-1) / size;  // Interior points divided by processes
-    int remainder = (n-1) % size;
+    // Debug output for rank 0
+    if (rank == 0) {
+        printf("Starting Jacobi MPI with n=%d, nsteps=%d, processes=%d\n", n, nsteps, size);
+        fflush(stdout);
+    }
+
+    // Simplified domain decomposition - ensure minimum work per process
+    int interior_points = n - 1;  // Points between boundaries
     
+    if (interior_points < size) {
+        if (rank == 0) {
+            fprintf(stderr, "Error: Too many processes (%d) for problem size (n=%d)\n", size, n);
+            fprintf(stderr, "Maximum processes for this problem: %d\n", interior_points);
+        }
+        MPI_Finalize();
+        return 1;
+    }
+    
+    int base_size = interior_points / size;
+    int remainder = interior_points % size;
+    
+    // Calculate local domain size including ghost points
+    int local_interior;
     if (rank < remainder) {
-        local_n = base_size + 1 + 2;  // +2 for boundary points
-        start_idx = rank * (base_size + 1);
+        local_interior = base_size + 1;
+        start_idx = rank * (base_size + 1) + 1;
     } else {
-        local_n = base_size + 2;      // +2 for boundary points
-        start_idx = remainder * (base_size + 1) + (rank - remainder) * base_size;
+        local_interior = base_size;
+        start_idx = remainder * (base_size + 1) + (rank - remainder) * base_size + 1;
+    }
+    
+    // Add boundary/ghost points
+    local_n = local_interior + 2;
+
+    // Debug output
+    if (rank == 0) {
+        printf("Domain decomposition: base_size=%d, remainder=%d\n", base_size, remainder);
+        printf("Rank %d: local_interior=%d, local_n=%d, start_idx=%d\n", 
+               rank, local_interior, local_n, start_idx);
+        fflush(stdout);
     }
 
     /* Allocate local arrays */
-    u_local = (double*) malloc( local_n * sizeof(double) );
-    f_local = (double*) malloc( local_n * sizeof(double) );
-    memset(u_local, 0, local_n * sizeof(double));
+    u_local = (double*) calloc(local_n, sizeof(double));
+    f_local = (double*) calloc(local_n, sizeof(double));
+    
+    if (!u_local || !f_local) {
+        fprintf(stderr, "Memory allocation failed on rank %d\n", rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    }
 
-    // Initialize f_local
+    // Initialize f_local with correct global indices
     for (i = 0; i < local_n; ++i) {
-        int global_idx = start_idx + i;
+        int global_idx = start_idx - 1 + i;
+        if (global_idx < 0) global_idx = 0;
+        if (global_idx > n) global_idx = n;
         f_local[i] = global_idx * h;
     }
     
-    // Set boundary conditions
+    // Set boundary conditions for actual boundary processes
     if (rank == 0) {
         u_local[0] = 0.0;  // Left boundary
     }
     if (rank == size-1) {
         u_local[local_n-1] = 0.0;  // Right boundary
+    }
+
+    // Debug: Confirm initialization
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == 0) {
+        printf("Initialization complete, starting Jacobi iterations...\n");
+        fflush(stdout);
     }
 
     /* Run the solver */
@@ -155,49 +202,67 @@ int main(int argc, char** argv)
     jacobi_mpi(nsteps, n, u_local, f_local, local_n, rank, size, MPI_COMM_WORLD);
     
     MPI_Barrier(MPI_COMM_WORLD);
-    if (rank == 0) get_time(&tend);
-
-    // Gather results to rank 0
     if (rank == 0) {
-        u = (double*) malloc( (n+1) * sizeof(double) );
-        f = (double*) malloc( (n+1) * sizeof(double) );
-        
-        // Copy local data from rank 0
-        memcpy(u, u_local, local_n * sizeof(double));
-        int current_pos = local_n;
-        
-        // Receive data from other processes
-        for (int src = 1; src < size; src++) {
-            int src_local_n;
-            if (src < remainder) {
-                src_local_n = base_size + 1 + 2;
-            } else {
-                src_local_n = base_size + 2;
-            }
-            
-            double* temp_u = (double*) malloc(src_local_n * sizeof(double));
-            MPI_Recv(temp_u, src_local_n, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            
-            // Copy interior points (skip overlapping boundary)
-            memcpy(&u[current_pos-1], &temp_u[1], (src_local_n-1) * sizeof(double));
-            current_pos += src_local_n - 1;
-            
-            free(temp_u);
-        }
-        
-        // Initialize f for output
-        for (i = 0; i <= n; ++i)
-            f[i] = i * h;
-    } else {
-        // Send local data to rank 0
-        MPI_Send(u_local, local_n, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+        get_time(&tend);
+        printf("Jacobi iterations complete, gathering results...\n");
+        fflush(stdout);
     }
 
+    // Gather results with error checking
     if (rank == 0) {
-        if (fname){
+        u = (double*) malloc((n+1) * sizeof(double));
+        f = (double*) malloc((n+1) * sizeof(double));
+        
+        if (!u || !f) {
+            fprintf(stderr, "Memory allocation failed for result arrays\n");
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+    }
+    
+    // Gather using simpler approach
+    int* recvcounts = NULL;
+    int* displs = NULL;
+    
+    if (rank == 0) {
+        recvcounts = (int*) malloc(size * sizeof(int));
+        displs = (int*) malloc(size * sizeof(int));
+        
+        // Calculate receive counts and displacements
+        int current_disp = 1; // Start after left boundary
+        for (i = 0; i < size; i++) {
+            if (i < remainder) {
+                recvcounts[i] = base_size + 1;
+            } else {
+                recvcounts[i] = base_size;
+            }
+            displs[i] = current_disp;
+            current_disp += recvcounts[i];
+        }
+        
+        // Set boundaries
+        u[0] = 0.0;  // Left boundary
+        u[n] = 0.0;  // Right boundary
+    }
+    
+    // Each process sends its interior points (skip boundary/ghost points)
+    double* send_data = &u_local[1];
+    MPI_Gatherv(send_data, local_interior, MPI_DOUBLE,
+                u ? &u[1] : NULL, recvcounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    if (rank == 0) {
+        printf("Results gathered successfully\n");
+        fflush(stdout);
+        
+        if (fname) {
             write_results(n, nsteps, tstart, tend, fname);
         }
         
+        // Initialize f for completeness
+        for (i = 0; i <= n; ++i)
+            f[i] = i * h;
+            
+        free(recvcounts);
+        free(displs);
         free(f);
         free(u);
     }

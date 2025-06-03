@@ -1,0 +1,98 @@
+openmp 8t
+Series: N=100000, NSTEPS=1000
+
+    Valor 1: 0.462541 s 
+    Valor 2: 0.460744 s 
+    Valor 3: 0.465419 s 
+    Valor 4: 0.460360 s 
+    Valor 5: 0.480517 s  
+
+Series: N=100000, NSTEPS=10000
+
+    Valor 1: 4.657920 s 
+    Valor 2: 4.587830 s 
+    Valor 3: 4.650740 s 
+    Valor 4: 4.645100 s 
+    Valor 5: 4.644690 s  
+
+Series: N=1000000, NSTEPS=1000
+
+    Valor 1: 4.259470 s 
+    Valor 2: 4.267640 s 
+    Valor 3: 4.320480 s 
+    Valor 4: 4.252280 s 
+    Valor 5: 4.237710 s  
+
+Series: N=1000000, NSTEPS=10000
+
+    Valor 1: 42.809700 s 
+    Valor 2: 42.725700 s 
+    Valor 3: 43.414525 s 
+    Valor 4: 44.744805 s 
+    Valor 5: 42.900959 s 
+
+Series: N=10000000, NSTEPS=10000
+
+    Valor 1: 423.938000 s 
+    Valor 2: 393.950662 s 
+    Valor 3: 470.501901 s 
+    Valor 4: 474.141415 s 
+    Valor 5: 392.520962 s 
+
+Series: N=10000000, NSTEPS=100000
+
+    Valor 1: 4285.549000 s 
+    Valor 2: 2965.622710 s 
+    Valor 3: 5314.478675 s 
+    Valor 4: 4256.302712 s 
+    Valor 5: 5133.021668 s 
+
+
+## openmp 8t o3
+Series: N=100000, NSTEPS=1000
+
+    Valor 1: 0.160687 s 
+    Valor 2: 0.163387 s 
+    Valor 3: 0.162089 s 
+    Valor 4: 0.163308 s 
+    Valor 5: 0.159174 s 
+
+Series: N=100000, NSTEPS=10000
+
+    Valor 1: 1.563150 s 
+    Valor 2: 1.578090 s 
+    Valor 3: 1.657660 s 
+    Valor 4: 1.586390 s 
+    Valor 5: 1.578420 s 
+
+Series: N=1000000, NSTEPS=1000
+
+    Valor 1: 1.260280 s 
+    Valor 2: 1.201480 s 
+    Valor 3: 1.183360 s 
+    Valor 4: 1.236440 s 
+    Valor 5: 1.203560 s 
+
+Series: N=1000000, NSTEPS=10000
+
+    Valor 1: 12.104400 s 
+    Valor 2: 11.768900 s 
+    Valor 3: 12.515193 s 
+    Valor 4: 11.644642 s 
+    Valor 5: 11.542488 s 
+
+Series: N=10000000, NSTEPS=10000
+
+    Valor 1: 201.669000 s 
+    Valor 2: 256.324214 s 
+    Valor 3: 221.147769 s 
+    Valor 4: 185.569382 s 
+    Valor 5: 238.833486 s 
+
+Series: N=10000000, NSTEPS=100000
+
+    Valor 1: 1912.097000 s 
+    Valor 2: 1375.328114 s 
+    Valor 3: 1649.585369 s 
+    Valor 4: 1622.805452 s 
+    Valor 5: 2004.026230 s 

@@ -1,0 +1,98 @@
+MPI
+N=100000, NSTEPS=1000
+
+    Valor 1: 0.317589 s 
+    Valor 2: 0.322350 s
+    Valor 3: 0.330632 s
+    Valor 4: 0.321353 s
+    Valor 5: 0.315555 s
+
+N=100000, NSTEPS=10000
+
+    Valor 1: 3.010700 s 
+    Valor 2: 3.064086 s
+    Valor 3: 2.862604 s
+    Valor 4: 3.116980 s
+    Valor 5: 3.003710 s
+
+N=1000000, NSTEPS=1000
+
+    Valor 1: 1.661770 s 
+    Valor 2: 1.735977 s
+    Valor 3: 1.743128 s
+    Valor 4: 1.609055 s
+    Valor 5: 1.632149 s
+
+N=1000000, NSTEPS=10000
+
+    Valor 1: 16.938700 s 
+    Valor 2: 17.618570 s
+    Valor 3: 16.556927 s
+    Valor 4: 17.290421 s
+    Valor 5: 17.419925 s
+
+N=10000000, NSTEPS=10000
+
+    Valor 1: 150.077000 s 
+    Valor 2: 152.364825 s
+    Valor 3: 147.874399 s
+    Valor 4: 162.864328 s
+    Valor 5: 143.437195 s
+
+N=10000000, NSTEPS=100000
+
+    Valor 1: 1528.260000 s 
+    Valor 2: 1330.109077 s
+    Valor 3: 1320.724925 s
+    Valor 4: 1339.764984 s
+    Valor 5: 1077.368254 s
+
+MPI o3
+
+N=100000, NSTEPS=1000
+
+    Valor 1: 0.302462 s 
+    Valor 2: 0.307089 s 
+    Valor 3: 0.289345 s 
+    Valor 4: 0.289803 s 
+    Valor 5: 0.290009 s 
+
+N=100000, NSTEPS=10000
+
+    Valor 1: 2.550560 s 
+    Valor 2: 2.600257 s 
+    Valor 3: 2.581304 s 
+    Valor 4: 2.492918 s 
+    Valor 5: 2.533400 s 
+
+N=1000000, NSTEPS=1000
+
+    Valor 1: 0.751852 s 
+    Valor 2: 0.740859 s 
+    Valor 3: 0.727229 s 
+    Valor 4: 0.726762 s 
+    Valor 5: 0.753647 s 
+
+N=1000000, NSTEPS=10000
+
+    Valor 1: 7.286790 s 
+    Valor 2: 7.092401 s 
+    Valor 3: 7.428154 s 
+    Valor 4: 7.526696 s 
+    Valor 5: 6.960503 s 
+
+N=10000000, NSTEPS=10000
+
+    Valor 1: 77.776600 s 
+    Valor 2: 84.504145 s 
+    Valor 3: 91.992144 s 
+    Valor 4: 96.236489 s 
+    Valor 5: 80.281971 s 
+
+N=10000000, NSTEPS=100000
+
+    Valor 1: 760.671000 s 
+    Valor 2: 884.171390 s 
+    Valor 3: 728.796837 s 
+    Valor 4: 951.550293 s 
+    Valor 5: 743.155867 s 

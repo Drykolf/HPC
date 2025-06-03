@@ -1,0 +1,60 @@
+# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## #
+#              Yet-Another-Bench-Script              #
+#                     v2025-04-20                    #
+# https://github.com/masonr/yet-another-bench-script #
+# ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## #
+
+Tue Jun  3 20:42:40 UTC 2025
+
+Basic System Information:
+---------------------------------
+Uptime     : 0 days, 1 hours, 2 minutes
+Processor  : Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz
+CPU cores  : 1 @ 2299.998 MHz
+AES-NI     : ✔ Enabled
+VM-x/AMD-V : ❌ Disabled
+RAM        : 957.4 MiB
+Swap       : 0.0 KiB
+Disk       : 7.7 GiB
+Distro     : Ubuntu 24.04.2 LTS
+Kernel     : 6.8.0-1029-aws
+VM Type    : XEN
+IPv4/IPv6  : ✔ Online / ❌ Offline
+
+IPv4 Network Information:
+---------------------------------
+ISP        : Amazon.com, Inc.
+ASN        : AS16509 Amazon.com, Inc.
+Host       : AWS EC2 (us-east-2)
+Location   : Dublin, Ohio (OH)
+Country    : United States
+
+fio Disk Speed Tests (Mixed R/W 50/50) (Partition /dev/root):
+---------------------------------
+Block Size | 4k            (IOPS) | 64k           (IOPS)
+  ------   | ---            ----  | ----           ----
+Read       | 6.19 MB/s     (1.5k) | 65.94 MB/s    (1.0k)
+Write      | 6.18 MB/s     (1.5k) | 66.37 MB/s    (1.0k)
+Total      | 12.38 MB/s    (3.0k) | 132.32 MB/s   (2.0k)
+           |                      |
+Block Size | 512k          (IOPS) | 1m            (IOPS)
+  ------   | ---            ----  | ----           ----
+Read       | 63.28 MB/s     (123) | 62.49 MB/s      (61)
+Write      | 66.28 MB/s     (129) | 66.94 MB/s      (65)
+Total      | 129.57 MB/s    (252) | 129.43 MB/s    (126)
+
+iperf3 Network Speed Tests (IPv4):
+---------------------------------
+Provider        | Location (Link)           | Send Speed      | Recv Speed      | Ping
+-----           | -----                     | ----            | ----            | ----
+Clouvider       | London, UK (10G)          | 703 Mbits/sec   | 185 Mbits/sec   | 86.2 ms
+Eranium         | Amsterdam, NL (100G)      | 699 Mbits/sec   | 21.8 Mbits/sec  | 103 ms
+Uztelecom       | Tashkent, UZ (10G)        | 567 Mbits/sec   | 108 Mbits/sec   | 179 ms
+Leaseweb        | Singapore, SG (10G)       | 555 Mbits/sec   | 9.02 Mbits/sec  | 250 ms
+Clouvider       | Los Angeles, CA, US (10G) | 705 Mbits/sec   | 239 Mbits/sec   | 56.6 ms
+Leaseweb        | NYC, NY, US (10G)         | 859 Mbits/sec   | 112 Mbits/sec   | 20.1 ms
+Edgoo           | Sao Paulo, BR (1G)        | 657 Mbits/sec   | 169 Mbits/sec   | 131 ms
+
+Geekbench test failed and low memory was detected. Add at least 1GB of SWAP or use GB4 instead (higher compatibility with low memory systems).
+
+YABS completed in 8 min 18 sec
